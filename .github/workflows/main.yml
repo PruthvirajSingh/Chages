@@ -1,0 +1,58 @@
+name: CI
+on: [pull_request,push]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./new test cases
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v3          
+        - uses: actions/setup-node@v3
+        
+        - name: Test case Execution
+          run: |
+            echo ${GITHUB_REPOSITORY}
+            ls       
+            echo "HOME: ${HOME}"
+            echo "GITHUB_WORKSPACE: ${GITHUB_WORKSPACE}"
+            echo "GITHUB_REPOSITORY: ${GITHUB_REPOSITORY}/new test cases"
+            npm install
+            pwd
+            npx wdio run ./wdio.conf.js --spec
+        - uses: actions/upload-artifact@v1
+          if: failure()
+          with:
+            name: logs
+            path: logs
+        - name: Get Allure history
+          uses: actions/checkout@v2
+          if: always()
+          continue-on-error: true
+          with:
+              ref: gh-pages
+              path: gh-pages
+
+        - name: Allure Report action from marketplace
+          uses: simple-elf/allure-report-action@master
+          if: always()
+        #id: allure-report
+          with:
+                 allure_results: new test cases/allure-results
+
+                 allure_history: new test cases/allure-history
+                 keep_reports: 1
+        - name: Deploy report to Github Pages
+          if: always()
+          uses: peaceiris/actions-gh-pages@v2
+          env:
+           PERSONAL_TOKEN: ${{secrets.TOKEN}}
+           PUBLISH_BRANCH: gh-pages
+           
+           PUBLISH_DIR: new test cases/allure-history
+           
+
+           
